@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 )
 
@@ -90,11 +91,11 @@ func (l *InMemoryLogger) LogLevel() string {
 	return l.logLevel.String()
 }
 
-// Buffer is not part of interface
+// Entries is not part of interface
 // only on concret type in-memory logger
-// allows to get content if in-memory logs
-func (l *InMemoryLogger) Buffer() string {
+// allows to get all in-memory logs
+func (l *InMemoryLogger) Entries() []string {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	return l.buffer.String()
+	return strings.Split(l.buffer.String(), "\n")
 }
