@@ -34,6 +34,11 @@ type (
 )
 
 const (
+	ZapBackend Backend = iota
+	InMemoryBackend
+)
+
+const (
 	DebugLevel LogLevel = "debug"
 	InfoLevel  LogLevel = "info"
 	WarnLevel  LogLevel = "warn"
@@ -44,9 +49,6 @@ const (
 	ProdEnvironment Environment = "prod"
 
 	LogLevelEnvVar = "AZA_LOG_LEVEL"
-
-	ZapBackend Backend = iota
-	InMemoryBackend
 )
 
 type Config struct {

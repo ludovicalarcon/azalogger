@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"time"
 
 	"go.opentelemetry.io/otel/trace"
 
@@ -52,10 +53,11 @@ func (l *zapLogger) LogLevel() string {
 
 func newZapLogger(cfg Config) (*zapLogger, error) {
 	zapCfg := createZapConfig(cfg)
-	logger, err := zapCfg.Build()
+	logger, err := zapCfg.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return nil, err
 	}
+
 	return &zapLogger{
 		logger: logger.Sugar(),
 		level:  zapCfg.Level,
@@ -86,12 +88,16 @@ func createZapConfig(cfg Config) zap.Config {
 	case DevEnvironment:
 		zapCfg = zap.NewDevelopmentConfig()
 		zapCfg.Encoding = "console"
+		zapCfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	default:
 		zapCfg = zap.NewProductionConfig()
 		zapCfg.Encoding = "json"
 	}
 	zapCfg.Level = zap.NewAtomicLevelAt(zapLevel)
 	zapCfg.EncoderConfig.TimeKey = "timestamp"
+	zapCfg.EncoderConfig.EncodeTime = zapcore.TimeEncoder(func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		enc.AppendString(t.UTC().Format("2006-01-02T15:04:05Z0700"))
+	})
 
 	return zapCfg
 }
