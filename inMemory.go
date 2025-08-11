@@ -12,17 +12,34 @@ import (
 // InMemoryLogger to be used for unit test
 // Call Buffer() of concret type to get the content of in-memory logs
 type InMemoryLogger struct {
-	buffer   *bytes.Buffer
-	mu       sync.Mutex
-	logLevel LogLevel
+	buffer         *bytes.Buffer
+	mu             sync.Mutex
+	logLevel       LogLevel
+	injectedFields []string
 }
 
 func newInMemoryLogger(cfg Config) *InMemoryLogger {
 	buffer := new(bytes.Buffer)
 	buffer.Grow(1024)
+
+	if !isValidLogLevel(cfg.LogLevel.String()) {
+		cfg.LogLevel = InfoLevel
+	}
+
 	return &InMemoryLogger{
-		buffer:   buffer,
-		logLevel: cfg.LogLevel,
+		buffer:         buffer,
+		logLevel:       cfg.LogLevel,
+		injectedFields: make([]string, 0, 2),
+	}
+}
+
+func isValidLogLevel(logLevel string) bool {
+	switch logLevel {
+	case DebugLevel.String(), InfoLevel.String(), WarnLevel.String(),
+		ErrorLevel.String(), FatalLevel.String():
+		return true
+	default:
+		return false
 	}
 }
 
@@ -70,10 +87,21 @@ func (l *InMemoryLogger) log(level, msg string, kv ...any) {
 			fmt.Fprintf(l.buffer, " %v=%v", kv[i], kv[i+1])
 		}
 	}
+	for _, field := range l.injectedFields {
+		fmt.Fprintf(l.buffer, " %s", field)
+	}
 	l.buffer.WriteByte('\n')
 }
 
-func (l *InMemoryLogger) With(keysAndValues ...any) Logger {
+func (l *InMemoryLogger) With(kv ...any) Logger {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	for i := 0; i < len(kv); i += 2 {
+		if i+1 < len(kv) {
+			l.injectedFields = append(l.injectedFields, fmt.Sprintf("%v=%v", kv[i], kv[i+1]))
+		}
+	}
 	return l
 }
 

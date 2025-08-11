@@ -1,0 +1,45 @@
+variables:
+  GO_VERSION: 1.24
+
+image: golang:${GO_VERSION}
+
+before_script:
+  - apt-get update && apt-get install -y curl unzip jq
+  - sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d
+  - pwd
+  - export PATH="$PWD/bin:$PATH"
+
+stages:
+  - module-verify
+  - vuln
+  - lint
+  - test
+
+module-verify:
+  stage: module-verify
+  script:
+    - task module-verify
+  rules:
+    - when: always
+
+vuln:
+  stage: vuln
+  script:
+    - task vuln
+  rules:
+    - when: always
+
+lint:
+  stage: lint
+  script:
+    - task lint
+  rules:
+    - when: always
+
+test:
+  stage: test
+  script:
+    - task test
+  coverage: '/coverage: \d+.\d+% of statements/'
+  rules:
+    - when: always

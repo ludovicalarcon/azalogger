@@ -23,7 +23,7 @@ func (l *zapLogger) Warn(msg string, kv ...any)  { l.logger.Warnw(msg, kv...) }
 func (l *zapLogger) Error(msg string, kv ...any) { l.logger.Errorw(msg, kv...) }
 func (l *zapLogger) Fatal(msg string, kv ...any) { l.logger.Fatalw(msg, kv...) }
 
-func (l *zapLogger) Sync() { l.logger.Sync() }
+func (l *zapLogger) Sync() { _ = l.logger.Sync() }
 
 func (l *zapLogger) With(kv ...any) Logger {
 	return &zapLogger{logger: l.logger.With(kv...)}
@@ -93,6 +93,7 @@ func createZapConfig(cfg Config) zap.Config {
 		zapCfg = zap.NewProductionConfig()
 		zapCfg.Encoding = "json"
 	}
+
 	zapCfg.Level = zap.NewAtomicLevelAt(zapLevel)
 	zapCfg.EncoderConfig.TimeKey = "timestamp"
 	zapCfg.EncoderConfig.EncodeTime = zapcore.TimeEncoder(func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
