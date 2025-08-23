@@ -125,55 +125,96 @@ func TestParseLogLevel(t *testing.T) {
 }
 
 func TestSlogLogs(t *testing.T) {
-	expectedebugLogMessage := "a dbg test"
-	expectedInfoLogMessage := "test message log"
-	expectedWarnLogMessage := "a warn message"
-	expectedErrLogMessage := "test err message log"
+	t.Run("should log", func(t *testing.T) {
+		expectedebugLogMessage := "a dbg test"
+		expectedInfoLogMessage := "test message log"
+		expectedWarnLogMessage := "a warn message"
+		expectedErrLogMessage := "test err message log"
 
-	// capture stdout
-	saveStdout := os.Stdout
-	r, w, err := os.Pipe()
-	require.NoError(t, err)
-	os.Stdout = w
+		// capture stdout
+		saveStdout := os.Stdout
+		r, w, err := os.Pipe()
+		require.NoError(t, err)
+		os.Stdout = w
 
-	defer func() {
-		os.Stdout = saveStdout
+		defer func() {
+			os.Stdout = saveStdout
+			_ = w.Close()
+			_ = r.Close()
+		}()
+
+		logger := newSlogLogger(Config{Env: ProdEnvironment, LogLevel: DebugLevel})
+		require.NotNil(t, logger)
+
+		logger.Debug(expectedebugLogMessage)
+		logger.Info(expectedInfoLogMessage)
+		logger.Warn(expectedWarnLogMessage)
+		logger.Error(expectedErrLogMessage)
+
+		withLogger := logger.With("app", "myapp").WithContext(context.Background())
+		withLogger.Info("another test")
+		logger.Sync()
+
 		_ = w.Close()
+		os.Stdout = saveStdout
+
+		// read captured output
+		var buff bytes.Buffer
+		_, err = io.Copy(&buff, r)
+		require.NoError(t, err)
 		_ = r.Close()
-	}()
 
-	logger := newSlogLogger(Config{Env: ProdEnvironment, LogLevel: DebugLevel})
-	require.NotNil(t, logger)
+		output := buff.String()
+		assert.NotEmpty(t, output)
+		assert.Contains(t, output, expectedebugLogMessage)
+		assert.Contains(t, output, strings.ToUpper(DebugLevel.String()))
+		assert.Contains(t, output, expectedInfoLogMessage)
+		assert.Contains(t, output, strings.ToUpper(InfoLevel.String()))
+		assert.Contains(t, output, expectedWarnLogMessage)
+		assert.Contains(t, output, strings.ToUpper(WarnLevel.String()))
+		assert.Contains(t, output, expectedErrLogMessage)
+		assert.Contains(t, output, strings.ToUpper(ErrorLevel.String()))
+		assert.Contains(t, output, "another test\",\"app\":\"myapp\"")
+		assert.NotContains(t, output, "stack")
+	})
 
-	logger.Debug(expectedebugLogMessage)
-	logger.Info(expectedInfoLogMessage)
-	logger.Warn(expectedWarnLogMessage)
-	logger.Error(expectedErrLogMessage)
+	t.Run("should contains stack in dev env", func(t *testing.T) {
+		expectedErrLogMessage := "test err message log"
 
-	withLogger := logger.With("app", "myapp").WithContext(context.Background())
-	withLogger.Info("another test")
-	logger.Sync()
+		// capture stdout
+		saveStdout := os.Stdout
+		r, w, err := os.Pipe()
+		require.NoError(t, err)
+		os.Stdout = w
 
-	_ = w.Close()
-	os.Stdout = saveStdout
+		defer func() {
+			os.Stdout = saveStdout
+			_ = w.Close()
+			_ = r.Close()
+		}()
 
-	// read captured output
-	var buff bytes.Buffer
-	_, err = io.Copy(&buff, r)
-	require.NoError(t, err)
-	_ = r.Close()
+		logger := newSlogLogger(Config{Env: DevEnvironment, LogLevel: DebugLevel})
+		require.NotNil(t, logger)
 
-	output := buff.String()
-	assert.NotEmpty(t, output)
-	assert.Contains(t, output, expectedebugLogMessage)
-	assert.Contains(t, output, strings.ToUpper(DebugLevel.String()))
-	assert.Contains(t, output, expectedInfoLogMessage)
-	assert.Contains(t, output, strings.ToUpper(InfoLevel.String()))
-	assert.Contains(t, output, expectedWarnLogMessage)
-	assert.Contains(t, output, strings.ToUpper(WarnLevel.String()))
-	assert.Contains(t, output, expectedErrLogMessage)
-	assert.Contains(t, output, strings.ToUpper(ErrorLevel.String()))
-	assert.Contains(t, output, "another test\",\"app\":\"myapp\"")
+		logger.Error(expectedErrLogMessage)
+
+		logger.Sync()
+
+		_ = w.Close()
+		os.Stdout = saveStdout
+
+		// read captured output
+		var buff bytes.Buffer
+		_, err = io.Copy(&buff, r)
+		require.NoError(t, err)
+		_ = r.Close()
+
+		output := buff.String()
+		assert.NotEmpty(t, output)
+		assert.Contains(t, output, expectedErrLogMessage)
+		assert.Contains(t, output, strings.ToUpper(ErrorLevel.String()))
+		assert.Contains(t, output, "stack")
+	})
 }
 
 func TestLogLevel_Slog(t *testing.T) {

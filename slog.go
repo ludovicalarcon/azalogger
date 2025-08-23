@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"runtime/debug"
 
 	"go.opentelemetry.io/otel/trace"
 )
@@ -14,13 +15,23 @@ import (
 type slogLogger struct {
 	logger *slog.Logger
 	level  *slog.LevelVar
+	env    Environment
 }
 
 func (l *slogLogger) Debug(msg string, kv ...any) { l.logger.Debug(msg, kv...) }
 func (l *slogLogger) Info(msg string, kv ...any)  { l.logger.Info(msg, kv...) }
 func (l *slogLogger) Warn(msg string, kv ...any)  { l.logger.Warn(msg, kv...) }
-func (l *slogLogger) Error(msg string, kv ...any) { l.logger.Error(msg, kv...) }
+func (l *slogLogger) Error(msg string, kv ...any) {
+	if l.env == DevEnvironment {
+		kv = append(kv, "stack", string(debug.Stack()))
+	}
+	l.logger.Error(msg, kv...)
+}
+
 func (l *slogLogger) Fatal(msg string, kv ...any) {
+	if l.env == DevEnvironment {
+		kv = append(kv, "stack", string(debug.Stack()))
+	}
 	l.logger.Error(msg, kv...)
 	os.Exit(1)
 }
@@ -107,22 +118,18 @@ func newSlogLogger(cfg Config) *slogLogger {
 
 	level := &slog.LevelVar{}
 	level.Set(logLevel)
+	var logger *slog.Logger
 	switch cfg.Env {
 	case DevEnvironment:
 		handler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: level})
-		logger := slog.New(handler)
-
-		return &slogLogger{
-			logger: logger,
-			level:  level,
-		}
+		logger = slog.New(handler)
 	default:
 		handler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})
-		logger := slog.New(handler)
-
-		return &slogLogger{
-			logger: logger,
-			level:  level,
-		}
+		logger = slog.New(handler)
+	}
+	return &slogLogger{
+		logger: logger,
+		level:  level,
+		env:    cfg.Env,
 	}
 }
