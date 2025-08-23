@@ -89,10 +89,10 @@ attackers can silence logging or elevate debug verbosity
 
 ### 3. In-memory logger
 
-The in-memory logger implementation is perfect to be used in unit test.
-Just need to call the Entries method to get a slice of logs.
-It's preferred to not use factory and call directly NewInMemoryLogger to leverage full features.
-Some helpers are not part of the interface but useful for unit test, so better to instantiate
+The in-memory logger implementation is perfect to be used in unit test.  
+Just need to call the Entries method to get a slice of logs.  
+It's preferred to not use factory and call directly NewInMemoryLogger to leverage full features.  
+Some helpers are not part of the interface but useful for unit test, so better to instantiate  
 concrete type and inject it as interface type
 
 ```go
