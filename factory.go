@@ -1,6 +1,9 @@
 package azalogger
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 var ErrUnsupportedBackend = errors.New("unsupported logger backend")
 
@@ -9,7 +12,8 @@ func NewLogger(cfg Config) (Logger, error) {
 	case ZapBackend:
 		return newZapLogger(cfg)
 	case InMemoryBackend:
-		return newInMemoryLogger(cfg), nil
+		fmt.Println("calling NewMemoryLogger(cfg) directly is prefered")
+		return NewInMemoryLogger(cfg), nil
 	default:
 		return nil, ErrUnsupportedBackend
 	}

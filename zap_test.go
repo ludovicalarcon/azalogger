@@ -156,18 +156,37 @@ func TestLogLevel_Zap(t *testing.T) {
 }
 
 func TestHttpLevelHandler_Zap(t *testing.T) {
-	body := strings.NewReader(`{"level":"debug"}`)
-	req, err := http.NewRequest("PUT", "/loglevel", body)
-	require.NoError(t, err)
-	req.Header.Set("Content-Type", "application/json")
-	rec := httptest.NewRecorder()
+	t.Run("should change log level", func(t *testing.T) {
+		body := strings.NewReader(`{"level":"debug"}`)
+		req, err := http.NewRequest("PUT", "/loglevel", body)
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
 
-	logger, err := newZapLogger(Config{LogLevel: DebugLevel})
-	require.NoError(t, err)
+		logger, err := newZapLogger(Config{LogLevel: InfoLevel})
+		require.NoError(t, err)
 
-	handler := logger.HTTPLevelHandler()
-	handler.ServeHTTP(rec, req)
+		handler := logger.HTTPLevelHandler(func(req *http.Request) bool { return true })
+		handler.ServeHTTP(rec, req)
 
-	assert.Equal(t, rec.Code, http.StatusOK)
-	assert.Equal(t, DebugLevel.String(), logger.LogLevel())
+		assert.Equal(t, rec.Code, http.StatusOK)
+		assert.Equal(t, DebugLevel.String(), logger.LogLevel())
+	})
+
+	t.Run("should return forbidden when auth handler return false", func(t *testing.T) {
+		body := strings.NewReader(`{"level":"debug"}`)
+		req, err := http.NewRequest("PUT", "/loglevel", body)
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		rec := httptest.NewRecorder()
+
+		logger, err := newZapLogger(Config{LogLevel: InfoLevel})
+		require.NoError(t, err)
+
+		handler := logger.HTTPLevelHandler(func(req *http.Request) bool { return false })
+		handler.ServeHTTP(rec, req)
+
+		assert.Equal(t, rec.Code, http.StatusForbidden)
+		assert.Equal(t, InfoLevel.String(), logger.LogLevel())
+	})
 }

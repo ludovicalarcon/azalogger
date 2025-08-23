@@ -57,6 +57,9 @@ type Config struct {
 	Backend  Backend
 }
 
+// Handler to check if the request is allowed to modify log level
+type AuthorizationHandler func(r *http.Request) bool
+
 func (l LogLevel) String() string {
 	return string(l)
 }
@@ -73,7 +76,7 @@ type Logger interface {
 	WithContext(ctx context.Context) Logger
 
 	// HTTP handler to change loglevel at runtime
-	HTTPLevelHandler() http.Handler
+	HTTPLevelHandler(authHandler AuthorizationHandler) http.Handler
 
 	LogLevel() string
 }

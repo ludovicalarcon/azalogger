@@ -1,6 +1,6 @@
 module gitlab.com/ludovic-alarcon/aza-logger
 
-go 1.24.4
+go 1.24
 
 require (
 	github.com/stretchr/testify v1.10.0

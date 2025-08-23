@@ -43,43 +43,63 @@ func main() {
 
 ### 2. 🔄 Runtime Log Level Control
 
-If using a backend that support dynamic log level, you can expose a log level handler:
+If using a backend that support dynamic log level, you can expose a log level HTTP handler with optional authorization:
 
 ```go
-http.Handle("/loglevel", log.HTTPLevelHandler())
+// Example: protect endpoint with simple API key
+apiKey := "supersecretkey"
+auth := func(r *http.Request) bool {
+    return r.Header.Get("X-API-Key") == apiKey
+}
+
+// Expose log level endpoint
+http.Handle("/loglevel", log.HTTPLevelHandler(auth))
 go http.ListenAndServe(":8080", nil)
 
 ```
 
 Then use:
 
-```go
-curl localhost:8080/loglevel
-curl -X PUT localhost:8080/loglevel -d '{"level":"debug"}'
+```bash
+# Get current log level (GET)
+curl -H "X-API-Key: supersecretkey" localhost:8080/loglevel
+
+# Change log level to debug (PUT)
+curl -X PUT -H "X-API-Key: supersecretkey" \
+     -H "Content-Type: application/json" \
+     -d '{"level":"debug"}' \
+     localhost:8080/loglevel
 ```
 
-Backends that don’t support dynamic log level return 501.
+Requests without valid authorization will return `403 Forbidden`.
 
-Backends with support
+Backends that don’t support dynamic log level return `501 Not Implemented`.
+
+##### Security recommendation
+
+Always protect the log level endpoint in production  
+attackers can silence logging or elevate debug verbosity
+
+##### Backends with support
 
 - ✅ Zap
 
 ### 3. In-memory logger
 
 The in-memory logger implementation is perfect to be used in unit test.
-Just need to call the Entries method to get a slice of log
+Just need to call the Entries method to get a slice of logs.
+It's preferred to not use factory and call directly NewInMemoryLogger to leverage full features.
+Some helpers are not part of the interface but useful for unit test, so better to instantiate
+concrete type and inject it as interface type
 
 ```go
-log, err := azalogger.NewLogger(azalogger.Config{
- Backend:  azalogger.ZapBackend,
+cfg := azalogger.Config{
+ Backend:  azalogger.InMemoryBackend,
  Env:      azalogger.ProdEnvironment,
  LogLevel: azalogger.InfoLevel,
-})
- 
-if err != nil {
-  panic(err)
 }
-
+log := NewInMemoryLogger(cfg)
+ 
 log.Info("service started")
-logs := log.(*azalogger.InMemoryLogger).Entries()
+logs := log.Entries()
 ```

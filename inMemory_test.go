@@ -48,15 +48,15 @@ func TestNewInMemoryLogger(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				logger := newInMemoryLogger(tc.cfg)
+				logger := NewInMemoryLogger(tc.cfg)
 				assert.Equal(t, tc.expected, logger.logLevel.String())
 			})
 		}
 	})
 
 	t.Run("should default to info logLevel on invalid or empty", func(t *testing.T) {
-		l1 := newInMemoryLogger(Config{})
-		l2 := newInMemoryLogger(Config{LogLevel: "foo"})
+		l1 := NewInMemoryLogger(Config{})
+		l2 := NewInMemoryLogger(Config{LogLevel: "foo"})
 
 		assert.Equal(t, InfoLevel.String(), l1.logLevel.String())
 		assert.Equal(t, InfoLevel.String(), l2.logLevel.String())
@@ -65,7 +65,7 @@ func TestNewInMemoryLogger(t *testing.T) {
 
 func TestInMemoryLogger(t *testing.T) {
 	t.Run("should log", func(t *testing.T) {
-		logger := newInMemoryLogger(Config{LogLevel: InfoLevel})
+		logger := NewInMemoryLogger(Config{LogLevel: InfoLevel})
 		expectedLog := "a test log"
 
 		logger.Info(expectedLog)
@@ -110,7 +110,7 @@ func TestInMemoryLogger(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
-				logger := newInMemoryLogger(Config{LogLevel: tc.logLevel})
+				logger := NewInMemoryLogger(Config{LogLevel: tc.logLevel})
 				expectedLog := "test"
 
 				logger.Debug(expectedLog, "app", "myapp")
@@ -133,7 +133,7 @@ func TestInMemoryLogger(t *testing.T) {
 	t.Run("should inject fields", func(t *testing.T) {
 		expectedLog := "some other log"
 
-		withLogger := newInMemoryLogger(Config{}).With("foo", "bar").WithContext(context.Background())
+		withLogger := NewInMemoryLogger(Config{}).With("foo", "bar").WithContext(context.Background())
 		withLogger.Warn(expectedLog)
 
 		entries := withLogger.(*InMemoryLogger).Entries()
@@ -144,7 +144,7 @@ func TestInMemoryLogger(t *testing.T) {
 	t.Run("should ignore injected fields when it's not a kv pair", func(t *testing.T) {
 		expectedLog := "another log"
 
-		withLogger := newInMemoryLogger(Config{}).With("foo").WithContext(context.Background())
+		withLogger := NewInMemoryLogger(Config{}).With("foo").WithContext(context.Background())
 		withLogger.Warn(expectedLog)
 
 		entries := withLogger.(*InMemoryLogger).Entries()
@@ -155,7 +155,7 @@ func TestInMemoryLogger(t *testing.T) {
 
 func TestLogLevel_InMemory(t *testing.T) {
 	cfg := Config{LogLevel: WarnLevel}
-	logger := newInMemoryLogger(cfg)
+	logger := NewInMemoryLogger(cfg)
 
 	assert.Equal(t, WarnLevel.String(), logger.LogLevel())
 }
@@ -167,9 +167,9 @@ func TestHttpLevelHandler_InMemory(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 
-	logger := newInMemoryLogger(Config{LogLevel: DebugLevel})
+	logger := NewInMemoryLogger(Config{LogLevel: DebugLevel})
 
-	handler := logger.HTTPLevelHandler()
+	handler := logger.HTTPLevelHandler(func(req *http.Request) bool { return true })
 	handler.ServeHTTP(rec, req)
 
 	assert.Equal(t, rec.Code, http.StatusNotImplemented)

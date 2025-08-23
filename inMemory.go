@@ -18,7 +18,7 @@ type InMemoryLogger struct {
 	injectedFields []string
 }
 
-func newInMemoryLogger(cfg Config) *InMemoryLogger {
+func NewInMemoryLogger(cfg Config) *InMemoryLogger {
 	buffer := new(bytes.Buffer)
 	buffer.Grow(1024)
 
@@ -109,7 +109,7 @@ func (l *InMemoryLogger) WithContext(ctx context.Context) Logger {
 	return l
 }
 
-func (l *InMemoryLogger) HTTPLevelHandler() http.Handler {
+func (l *InMemoryLogger) HTTPLevelHandler(authHandler AuthorizationHandler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "log level control not supported for in-memory logger", http.StatusNotImplemented)
 	})

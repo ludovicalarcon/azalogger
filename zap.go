@@ -14,7 +14,7 @@ import (
 
 type zapLogger struct {
 	logger *zap.SugaredLogger
-	level  zap.AtomicLevel
+	level  *zap.AtomicLevel
 }
 
 func (l *zapLogger) Debug(msg string, kv ...any) { l.logger.Debugw(msg, kv...) }
@@ -41,8 +41,13 @@ func (l *zapLogger) WithContext(ctx context.Context) Logger {
 		"span_id", spanCtx.SpanID().String())
 }
 
-func (l *zapLogger) HTTPLevelHandler() http.Handler {
+func (l *zapLogger) HTTPLevelHandler(authHandler AuthorizationHandler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if authHandler != nil && !authHandler(r) {
+			http.Error(w, "unauthorized", http.StatusForbidden)
+			return
+		}
+
 		l.level.ServeHTTP(w, r)
 	})
 }
@@ -60,7 +65,7 @@ func newZapLogger(cfg Config) (*zapLogger, error) {
 
 	return &zapLogger{
 		logger: logger.Sugar(),
-		level:  zapCfg.Level,
+		level:  &zapCfg.Level,
 	}, nil
 }
 
