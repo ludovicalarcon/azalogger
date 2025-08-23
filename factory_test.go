@@ -19,6 +19,17 @@ func TestNewLogger(t *testing.T) {
 		assert.IsType(t, &zapLogger{}, logger)
 	})
 
+	t.Run("should create zap logger based on backend", func(t *testing.T) {
+		cfg := Config{
+			Backend: SlogBackend,
+		}
+
+		logger, err := NewLogger(cfg)
+		require.NoError(t, err)
+		require.NotNil(t, logger)
+		assert.IsType(t, &slogLogger{}, logger)
+	})
+
 	t.Run("should create in-memory logger based on backend", func(t *testing.T) {
 		cfg := Config{
 			Backend: InMemoryBackend,

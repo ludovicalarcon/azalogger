@@ -8,6 +8,7 @@
 
 - ✅ Unified `Logger` interface
 - ✅ Zap backend with structured, high-performance logs
+- ✅ Slog backend with structured logs (stdlib)
 - ✅ In-memory backend for test logging
 - ✅ Context propagation with `WithContext(ctx)`
 - ✅ Field injection with `With(...)`
@@ -27,6 +28,7 @@ import (
 
 func main() {
  log, err := azalogger.NewLogger(azalogger.Config{
+  // Use azalogger.SlogBackend for slog logger
   Backend:  azalogger.ZapBackend,
   Env:      azalogger.ProdEnvironment,
   LogLevel: azalogger.InfoLevel,
@@ -83,6 +85,7 @@ attackers can silence logging or elevate debug verbosity
 ##### Backends with support
 
 - ✅ Zap
+- ✅ Slog
 
 ### 3. In-memory logger
 

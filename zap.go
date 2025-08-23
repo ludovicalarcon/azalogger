@@ -3,7 +3,6 @@ package azalogger
 import (
 	"context"
 	"net/http"
-	"os"
 	"time"
 
 	"go.opentelemetry.io/otel/trace"
@@ -67,17 +66,6 @@ func newZapLogger(cfg Config) (*zapLogger, error) {
 		logger: logger.Sugar(),
 		level:  &zapCfg.Level,
 	}, nil
-}
-
-func getLogLevel(cfg Config) LogLevel {
-	level := LogLevel(os.Getenv(LogLevelEnvVar))
-	if level == "" {
-		level = cfg.LogLevel
-		if level == "" {
-			level = InfoLevel
-		}
-	}
-	return level
 }
 
 func createZapConfig(cfg Config) zap.Config {

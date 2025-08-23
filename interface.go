@@ -25,6 +25,7 @@ package azalogger
 import (
 	"context"
 	"net/http"
+	"os"
 )
 
 type (
@@ -35,6 +36,7 @@ type (
 
 const (
 	ZapBackend Backend = iota
+	SlogBackend
 	InMemoryBackend
 )
 
@@ -79,4 +81,15 @@ type Logger interface {
 	HTTPLevelHandler(authHandler AuthorizationHandler) http.Handler
 
 	LogLevel() string
+}
+
+func getLogLevel(cfg Config) LogLevel {
+	level := LogLevel(os.Getenv(LogLevelEnvVar))
+	if level == "" {
+		level = cfg.LogLevel
+		if level == "" {
+			level = InfoLevel
+		}
+	}
+	return level
 }

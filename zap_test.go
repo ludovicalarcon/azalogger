@@ -93,7 +93,7 @@ func TestGetLogLevel(t *testing.T) {
 	})
 }
 
-func TestLogs(t *testing.T) {
+func TestZapLogs(t *testing.T) {
 	expectedebugLogMessage := "a dbg test"
 	expectedInfoLogMessage := "test message log"
 	expectedWarnLogMessage := "a warn message"
