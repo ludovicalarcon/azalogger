@@ -55,7 +55,7 @@ func (l *slogLogger) HTTPLevelHandler(authHandler AuthorizationHandler) http.Han
 		case http.MethodGet:
 			level := l.level.Level().String()
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"level": level})
+			_ = json.NewEncoder(w).Encode(map[string]string{"level": level})
 			w.WriteHeader(http.StatusOK)
 		case http.MethodPut:
 			var payload struct {
