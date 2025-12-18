@@ -96,13 +96,19 @@ Some helpers are not part of the interface but useful for unit test, so better t
 concrete type and inject it as interface type
 
 ```go
-cfg := azalogger.Config{
- Backend:  azalogger.InMemoryBackend,
- Env:      azalogger.ProdEnvironment,
- LogLevel: azalogger.InfoLevel,
+import (
+ azalogger "gitlab.com/ludovic-alarcon/aza-logger"
+)
+
+func main() {
+  cfg := azalogger.Config{
+   Backend:  azalogger.InMemoryBackend,
+   Env:      azalogger.ProdEnvironment,
+   LogLevel: azalogger.InfoLevel,
+  }
+  log := azalogger.NewInMemoryLogger(cfg)
+
+  log.Info("service started")
+  logs := log.Entries()
 }
-log := NewInMemoryLogger(cfg)
- 
-log.Info("service started")
-logs := log.Entries()
 ```
