@@ -1,5 +1,5 @@
 variables:
-  GO_VERSION: 1.24
+  GO_VERSION: 1.25
 
 image: golang:${GO_VERSION}
 
